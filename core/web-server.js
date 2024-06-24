@@ -8,7 +8,7 @@ const { tablePiece, tablePieceComposition } = require('../models/associations');
 
 class WebServer {
     app = undefined;
-    port = 4000;
+    port = process.env.DB_PORT;
     server = undefined;
 
     constructor() {
