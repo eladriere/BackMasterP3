@@ -18,6 +18,7 @@ services:
       - DB_USER=eladriere
       - DB_PASSWORD=password
       - DB_PORT=3333
+      - PORT=3333
       - DB_NAME=Ping-Pong-Piece
       - HOST=postgresql
     command: npm run start
