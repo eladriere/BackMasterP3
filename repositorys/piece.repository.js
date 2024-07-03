@@ -3,7 +3,7 @@ const {tablePieceComposition} = require("../models/pieceComposition.model")
 const {where, DataTypes} = require("sequelize");
 
 exports.getAllPieceWithRange = async function getAllPieceWithRange(offset, limit) {
-    return await tablePiece.findAll({ offset: offset, limit: limit });
+    return await tablePiece.findAll({offset: offset, limit: limit});
 }
 
 exports.getPieceById = async function getPieceById(idPiece) {
@@ -20,17 +20,18 @@ exports.getPieceByNom = async function getPieceByNom(nomPiece) {
 
 exports.createPiece = async function createPiece(body) {
     console.log("body", body)
-    let pieceCreer = await tablePiece.create(body.piece)
-    if (pieceCreer) {
-        if (body.sousPiece && body.sousPiece.length > 0) {
-            for (let sousPieceData of body.sousPiece) {
-                await tablePieceComposition.create({
-                    idPieceCompose : pieceCreer.idPiece,
-                    idPieceComposant: sousPieceData.idPiece,
-                    quantite : sousPieceData.quantite
-                })
+    if (body.sousPiece && body.sousPiece.length > 0) {
+        for (let sousPieceData of body.sousPiece) {
+            if (tablePiece.findOne({where: {idPiece: sousPieceData.idPiece}})) {
+                let pieceCreer = await tablePiece.create(body.piece)
+                if (pieceCreer) {
+                    await tablePieceComposition.create({
+                        idPieceCompose: pieceCreer.idPiece,
+                        idPieceComposant: sousPieceData.idPiece,
+                        quantite: sousPieceData.quantite
+                    })
+                }
             }
         }
-
     }
 }
