@@ -3,35 +3,48 @@ const pieceRepository = require('../repositorys/piece.repository');
 const router = express.Router();
 
 router.get('/:offset/:limit', async (req, res) => {
-    res.send(await pieceRepository.getAllPieceWithRange(req.params.offset, req.params.limit));
+    try {
+        const pieces = await pieceRepository.getAllPieceWithRange(req.params.offset, req.params.limit);
+        res.status(200).send(pieces);
+    } catch (error) {
+        console.error('Error fetching pieces:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 router.post('/', async (req, res) => {
-    if (!req.body) {
-        res.sendStatus(400)
+    if (!req.body || !req.body.data) {
+        return res.status(400).send('Invalid request body');
     }
 
-    console.log(req.body)
+    try {
+        console.log('Request body:', req.body.data);
 
-    if (await isPieceAlreadyExist(req.body.data)) {
-        res.sendStatus(400)
-    } else {
-        let result = pieceRepository.createPiece(req.body.data);
-        console.log(result)
-        if (result) {
-            res.sendStatus(200)
-        } else {
-            res.sendStatus(403)
+        if (await isPieceAlreadyExist(req.body.data)) {
+            return res.status(400).send('Piece already exists');
         }
+
+        const result = await pieceRepository.createPiece(req.body.data);
+        console.log('Creation result:', result);
+
+        if (result) {
+            res.status(201).send('Piece created successfully');
+        } else {
+            res.status(403).send('Piece creation failed');
+        }
+    } catch (error) {
+        console.error('Error creating piece:', error);
+        res.status(500).send('Internal Server Error');
     }
 });
 
 async function isPieceAlreadyExist(data) {
-    console.log(data)
-    if(data !== undefined && data.piece !== undefined && data.piece.nom !== undefined) {
-        return await pieceRepository.getPieceByNom(data.piece.nom);
+    console.log('Checking existence for:', data);
+    if (data && data.piece && data.piece.nom) {
+        const existingPiece = await pieceRepository.getPieceByNom(data.piece.nom);
+        return !!existingPiece; // Return true if piece exists, false otherwise
     } else {
-        return true
+        return true; // Return true to indicate invalid data structure
     }
 }
 

@@ -19,19 +19,38 @@ exports.getPieceByNom = async function getPieceByNom(nomPiece) {
 }
 
 exports.createPiece = async function createPiece(body) {
-    console.log("body", body)
-    if (body.sousPiece && body.sousPiece.length > 0) {
-        for (let sousPieceData of body.sousPiece) {
-            if (tablePiece.findOne({where: {idPiece: sousPieceData.idPiece}})) {
-                let pieceCreer = await tablePiece.create(body.piece)
-                if (pieceCreer) {
-                    await tablePieceComposition.create({
-                        idPieceCompose: pieceCreer.idPiece,
-                        idPieceComposant: sousPieceData.idPiece,
-                        quantite: sousPieceData.quantite
-                    })
+    try {
+        console.log("body", body);
+
+        if (body.sousPiece && body.sousPiece.length > 0) {
+            for (let sousPieceData of body.sousPiece) {
+                const existingPiece = await tablePiece.findOne({where: {idPiece: sousPieceData.idPiece}});
+
+                if (existingPiece) {
+                    const pieceCreer = await tablePiece.create(body.piece);
+
+                    if (pieceCreer) {
+                        await tablePieceComposition.create({
+                            idPieceCompose: pieceCreer.idPiece,
+                            idPieceComposant: sousPieceData.idPiece,
+                            quantite: sousPieceData.quantite
+                        });
+                    } else {
+                        throw new Error('Failed to create piece');
+                    }
+                } else {
+                    throw new Error(`Sous piece with id ${sousPieceData.idPiece} does not exist`);
                 }
             }
+        } else {
+            const pieceCreer = await tablePiece.create(body.piece);
+            if (!pieceCreer) {
+                throw new Error('Failed to create piece without sous pieces');
+            }
         }
+        return {success: true, message: 'Piece created successfully'};
+    } catch (error) {
+        console.error('Error creating piece:', error);
+        return {success: false, message: error.message};
     }
 }
